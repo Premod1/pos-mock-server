@@ -298,7 +298,128 @@
         .message-cell {
             font-size: 0.9rem;
             color: var(--text-primary);
-            word-break: break-all;
+            max-width: 450px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            cursor: pointer;
+            transition: color 0.2s ease;
+        }
+
+        .message-cell:hover {
+            color: #fb7185;
+            text-decoration: underline;
+        }
+
+        /* Premium Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(10, 15, 29, 0.85);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .modal-card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 1.25rem;
+            width: 90%;
+            max-width: 650px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            transform: scale(0.9);
+            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            overflow: hidden;
+        }
+
+        .modal-overlay.active .modal-card {
+            transform: scale(1);
+        }
+
+        .modal-header {
+            padding: 1.25rem 1.75rem;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h3 {
+            font-size: 1.15rem;
+            font-weight: 600;
+            background: linear-gradient(135deg, #fb7185 0%, #e11d48 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin: 0;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 1.75rem;
+            cursor: pointer;
+            transition: color 0.2s ease;
+            line-height: 1;
+        }
+
+        .modal-close:hover {
+            color: var(--danger);
+        }
+
+        .modal-body {
+            padding: 1.75rem;
+        }
+
+        .modal-meta {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 0.75rem;
+            margin-bottom: 1.5rem;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            border-bottom: 1px solid rgba(46, 58, 95, 0.5);
+            padding-bottom: 1.25rem;
+        }
+
+        @media (min-width: 576px) {
+            .modal-meta {
+                grid-template-columns: 1.2fr 0.8fr 1.5fr;
+            }
+        }
+
+        .modal-text-wrapper {
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 0.75rem;
+            padding: 1.25rem;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .modal-text-wrapper pre {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            font-family: var(--font-mono);
+            font-size: 0.9rem;
+            color: var(--text-primary);
+            line-height: 1.6;
+            margin: 0;
         }
 
         /* Badges */
@@ -494,7 +615,7 @@
                                             {{ $lvl }}
                                         </span>
                                     </td>
-                                    <td class="message-cell">
+                                    <td class="message-cell" onclick="showLogDetails('{{ $log->agent_name ?? 'Unknown-Agent' }}', '{{ strtoupper($log->level) }}', '{{ \Carbon\Carbon::parse($log->client_timestamp)->format('Y-m-d H:i:s') }}', {{ json_encode($log->message) }})">
                                         {{ $log->message }}
                                     </td>
                                 </tr>
@@ -505,6 +626,26 @@
             </div>
         </div>
 
+    </div>
+
+    <!-- Premium Modal Popup for Full Log Messages -->
+    <div id="log-modal" class="modal-overlay">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3>Full Log Message Details</h3>
+                <button class="modal-close" onclick="closeLogModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="modal-meta">
+                    <div><strong>Agent Name:</strong> <br><span id="modal-agent" style="color: #a5b4fc; font-weight: 500;"></span></div>
+                    <div><strong>Log Level:</strong> <br><span id="modal-level" class="badge"></span></div>
+                    <div><strong>Timestamp (Client):</strong> <br><span id="modal-time" class="mono-cell"></span></div>
+                </div>
+                <div class="modal-text-wrapper">
+                    <pre><code id="modal-message"></code></pre>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- Live AJAX Refresh, Search & Filter Script -->
@@ -606,15 +747,21 @@
                 else if (log.level === 'ERROR') badgeClass = 'badge-error';
                 else if (log.level === 'CRITICAL') badgeClass = 'badge-critical';
 
+                // Safely stringify variables to prevent HTML/Quotes escaping issues in JS parameters
+                const escMsg = JSON.stringify(log.message);
+                const escAgent = JSON.stringify(log.agent_name || 'Unknown-Agent');
+                const escLvl = JSON.stringify(log.level);
+                const escTime = JSON.stringify(log.client_timestamp_formatted);
+
                 html += `
                     <tr>
                         <td class="mono-cell">${log.client_timestamp_formatted}</td>
                         <td class="mono-cell" style="color: var(--text-muted)">${log.created_at_formatted}</td>
-                        <td style="font-weight: 500; color: #a5b4fc">${log.agent_name}</td>
+                        <td style="font-weight: 500; color: #a5b4fc">${log.agent_name || 'Unknown-Agent'}</td>
                         <td>
                             <span class="badge ${badgeClass}">${log.level}</span>
                         </td>
-                        <td class="message-cell">${log.message}</td>
+                        <td class="message-cell" onclick='showLogDetails(${escAgent}, ${escLvl}, ${escTime}, ${escMsg})'>${log.message}</td>
                     </tr>
                 `;
             });
@@ -643,6 +790,46 @@
 
         // Refresh log traces every 3 seconds dynamically without reloading the page
         setInterval(refreshLogsTable, 30000000);
+
+        // Modal triggers
+        function showLogDetails(agent, level, time, message) {
+            document.getElementById('modal-agent').innerText = agent;
+            document.getElementById('modal-time').innerText = time;
+            document.getElementById('modal-message').innerText = message;
+            
+            const levelSpan = document.getElementById('modal-level');
+            levelSpan.innerText = level;
+            levelSpan.className = 'badge'; // reset
+            
+            const lvl = level.toUpperCase();
+            if (lvl === 'INFO') levelSpan.classList.add('badge-info');
+            else if (lvl === 'DEBUG') levelSpan.classList.add('badge-debug');
+            else if (lvl === 'WARNING') levelSpan.classList.add('badge-warning');
+            else if (lvl === 'ERROR') levelSpan.classList.add('badge-error');
+            else if (lvl === 'CRITICAL') levelSpan.classList.add('badge-critical');
+
+            const modal = document.getElementById('log-modal');
+            modal.style.display = 'flex';
+            setTimeout(() => {
+                modal.classList.add('active');
+            }, 10);
+        }
+
+        function closeLogModal() {
+            const modal = document.getElementById('log-modal');
+            modal.classList.remove('active');
+            setTimeout(() => {
+                modal.style.display = 'none';
+            }, 300);
+        }
+
+        // Close on clicking overlay background
+        window.addEventListener('click', function(e) {
+            const modal = document.getElementById('log-modal');
+            if (e.target === modal) {
+                closeLogModal();
+            }
+        });
     </script>
 </body>
 </html>
