@@ -494,6 +494,94 @@
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
+
+        /* Date Picker CSS */
+        .date-wrapper {
+            position: relative;
+            min-width: 160px;
+        }
+
+        .date-input {
+            width: 100%;
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            border-radius: 0.5rem;
+            padding: 0.55rem 1rem;
+            font-size: 0.9rem;
+            outline: none;
+            transition: all 0.2s ease;
+            font-family: var(--font-sans);
+            cursor: pointer;
+        }
+
+        .date-input:focus {
+            border-color: #fb7185;
+            box-shadow: 0 0 0 2px rgba(244, 63, 94, 0.15);
+        }
+
+        /* Premium Pagination Styles */
+        .pagination-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1.25rem 1.75rem;
+            border-top: 1px solid var(--border-color);
+            gap: 1rem;
+        }
+
+        @media (min-width: 576px) {
+            .pagination-container {
+                flex-direction: row;
+            }
+        }
+
+        .pagination-info {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .pagination-buttons {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .page-link {
+            background-color: var(--bg-secondary);
+            color: var(--text-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 0.5rem;
+            padding: 0.5rem 0.85rem;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            user-select: none;
+        }
+
+        .page-link:hover:not(.disabled) {
+            background-color: rgba(255, 255, 255, 0.05);
+            color: var(--text-primary);
+            border-color: var(--text-muted);
+        }
+
+        .page-link.active {
+            background-color: rgba(244, 63, 94, 0.15);
+            color: #fb7185;
+            border-color: rgba(244, 63, 94, 0.3);
+            font-weight: 600;
+        }
+
+        .page-link.disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
     </style>
 </head>
 <body>
@@ -514,17 +602,15 @@
                     <span>Back to Dashboard</span>
                 </a>
                 
-                @if(!$logs->isEmpty())
-                    <form action="{{ route('terminal-logs.clear') }}" method="POST" onsubmit="return confirm('Are you sure you want to clear all logs? This action cannot be undone.');">
-                        @csrf
-                        <button type="submit" class="btn-danger-outline">
-                            <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                            </svg>
-                            <span>Clear All</span>
-                        </button>
-                    </form>
-                @endif
+                <form action="{{ route('terminal-logs.clear') }}" method="POST" onsubmit="return confirm('Are you sure you want to clear all logs? This action cannot be undone.');">
+                    @csrf
+                    <button type="submit" class="btn-danger-outline">
+                        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                        <span>Clear All</span>
+                    </button>
+                </form>
             </div>
         </header>
 
@@ -544,6 +630,11 @@
                     <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
                 <input type="text" id="search-input" class="search-input" placeholder="Search by message or agent name..." oninput="handleSearchFilter()">
+            </div>
+
+            <!-- Date Filter Picker -->
+            <div class="date-wrapper">
+                <input type="date" id="date-input" class="date-input" onchange="handleDateFilterChange()">
             </div>
 
             <!-- Filter Buttons -->
@@ -571,59 +662,15 @@
             </div>
 
             <div class="table-responsive" id="table-container">
-                @if($logs->isEmpty())
-                    <div class="empty-state">
-                        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
-                        </svg>
-                        <p>No terminal logs captured yet. Logs sent from the C# agent will display here.</p>
-                    </div>
-                @else
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Client Timestamp</th>
-                                <th>Logged to Server</th>
-                                <th>Agent</th>
-                                <th>Level</th>
-                                <th>Log Message</th>
-                            </tr>
-                        </thead>
-                        <tbody id="logs-tbody">
-                            @foreach($logs as $log)
-                                <tr class="log-row" data-level="{{ strtoupper($log->level) }}">
-                                    <td class="mono-cell">
-                                        {{ \Carbon\Carbon::parse($log->client_timestamp)->format('Y-m-d H:i:s') }}
-                                    </td>
-                                    <td class="mono-cell" style="color: var(--text-muted)">
-                                        {{ $log->created_at->format('Y-m-d H:i:s') }}
-                                    </td>
-                                    <td style="font-weight: 500; color: #a5b4fc">
-                                        {{ $log->agent_name ?? 'Unknown-Agent' }}
-                                    </td>
-                                    <td>
-                                        @php
-                                            $badgeClass = 'badge-info';
-                                            $lvl = strtoupper($log->level);
-                                            if ($lvl === 'INFO') $badgeClass = 'badge-info';
-                                            elseif ($lvl === 'DEBUG') $badgeClass = 'badge-debug';
-                                            elseif ($lvl === 'WARNING') $badgeClass = 'badge-warning';
-                                            elseif ($lvl === 'ERROR') $badgeClass = 'badge-error';
-                                            elseif ($lvl === 'CRITICAL') $badgeClass = 'badge-critical';
-                                        @endphp
-                                        <span class="badge {{ $badgeClass }}">
-                                            {{ $lvl }}
-                                        </span>
-                                    </td>
-                                    <td class="message-cell" onclick="showLogDetails('{{ $log->agent_name ?? 'Unknown-Agent' }}', '{{ strtoupper($log->level) }}', '{{ \Carbon\Carbon::parse($log->client_timestamp)->format('Y-m-d H:i:s') }}', {{ json_encode($log->message) }})">
-                                        {{ $log->message }}
-                                    </td>
-                                </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                @endif
+                <div class="empty-state">
+                    <svg class="spinner" width="24" height="24" fill="none" viewBox="0 0 24 24" style="margin: 0 auto 1rem; animation: spin 1s linear infinite;">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" style="opacity: 0.25;"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" style="opacity: 0.75;"></path>
+                    </svg>
+                    <p>Fetching latest terminal logs...</p>
+                </div>
             </div>
+            <div id="pagination-container"></div>
         </div>
 
     </div>
@@ -652,17 +699,54 @@
     <script>
         let selectedLevel = 'ALL';
         let searchQuery = '';
-        let allLogs = [];
+        let currentPage = 1;
+        let selectedDate = '';
+        let totalPages = 1;
+        let totalRecords = 0;
 
-        // Fetch logs data immediately on load to populate local array
-        function fetchInitialLogs() {
-            fetch('{{ route('terminal-logs.data') }}')
+        // Set default date input to today
+        const todayStr = new Date().toISOString().split('T')[0];
+        document.getElementById('date-input').value = todayStr;
+        selectedDate = todayStr;
+
+        // Fetch logs data from paginated API endpoint
+        function fetchLogs(page = 1) {
+            currentPage = page;
+            const container = document.getElementById('table-container');
+            
+            // Show updating status
+            const refreshInfo = document.querySelector('.refresh-info');
+            if (refreshInfo) refreshInfo.style.opacity = '1';
+
+            const url = `{{ route('terminal-logs.data') }}?page=${page}&date=${selectedDate}&level=${selectedLevel}&search=${encodeURIComponent(searchQuery)}`;
+            
+            fetch(url)
                 .then(response => response.json())
-                .then(data => {
-                    allLogs = data;
-                    renderLogsTable();
+                .then(res => {
+                    totalPages = res.last_page;
+                    totalRecords = res.total;
+                    renderLogsTable(res.data);
+                    renderPagination(res);
+                    if (refreshInfo) {
+                        setTimeout(() => {
+                            refreshInfo.style.opacity = '0.5';
+                        }, 500);
+                    }
                 })
-                .catch(err => console.error('Error fetching initial logs:', err));
+                .catch(err => {
+                    console.error('Error fetching logs:', err);
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <p style="color: var(--danger)">Error loading logs from server.</p>
+                        </div>
+                    `;
+                });
+        }
+
+        // Date filter change handler
+        function handleDateFilterChange() {
+            selectedDate = document.getElementById('date-input').value;
+            fetchLogs(1);
         }
 
         // Set log level filter
@@ -678,48 +762,30 @@
                 }
             });
 
-            renderLogsTable();
+            fetchLogs(1);
         }
 
-        // Search text filter
+        // Search text filter with 300ms debounce to prevent high server load
+        let searchTimeout;
         function handleSearchFilter() {
-            searchQuery = document.getElementById('search-input').value.toLowerCase().trim();
-            renderLogsTable();
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                searchQuery = document.getElementById('search-input').value.trim();
+                fetchLogs(1);
+            }, 300);
         }
 
-        // Function to filter and build table rows dynamically
-        function renderLogsTable() {
+        // Function to build table rows dynamically
+        function renderLogsTable(logs) {
             const container = document.getElementById('table-container');
             
-            // Filter logs locally
-            const filteredLogs = allLogs.filter(log => {
-                const matchesLevel = (selectedLevel === 'ALL' || log.level === selectedLevel);
-                const matchesSearch = (
-                    log.message.toLowerCase().includes(searchQuery) ||
-                    log.agent_name.toLowerCase().includes(searchQuery)
-                );
-                return matchesLevel && matchesSearch;
-            });
-
-            if (allLogs.length === 0) {
+            if (!logs || logs.length === 0) {
                 container.innerHTML = `
                     <div class="empty-state">
-                        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 48px; height: 48px; stroke: var(--text-muted); margin-bottom: 1rem; opacity: 0.5;">
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
                         </svg>
-                        <p>No terminal logs captured yet. Logs sent from the C# agent will display here.</p>
-                    </div>
-                `;
-                return;
-            }
-
-            if (filteredLogs.length === 0) {
-                container.innerHTML = `
-                    <div class="empty-state">
-                        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                        </svg>
-                        <p>No logs found matching your filters.</p>
+                        <p>No terminal logs captured for this date or matching filters.</p>
                     </div>
                 `;
                 return;
@@ -739,7 +805,7 @@
                     <tbody>
             `;
 
-            filteredLogs.forEach(log => {
+            logs.forEach(log => {
                 let badgeClass = 'badge-info';
                 if (log.level === 'INFO') badgeClass = 'badge-info';
                 else if (log.level === 'DEBUG') badgeClass = 'badge-debug';
@@ -774,21 +840,77 @@
             container.innerHTML = html;
         }
 
-        // Periodically refresh the data table via AJAX
-        function refreshLogsTable() {
-            fetch('{{ route('terminal-logs.data') }}')
-                .then(response => response.json())
-                .then(data => {
-                    allLogs = data;
-                    renderLogsTable();
-                })
-                .catch(err => console.error('Error refreshing logs:', err));
+        // Render Pagination buttons and stats
+        function renderPagination(res) {
+            const paginationContainer = document.getElementById('pagination-container');
+            if (!res || res.total === 0) {
+                paginationContainer.innerHTML = '';
+                return;
+            }
+
+            const from = (res.current_page - 1) * res.per_page + 1;
+            const to = Math.min(res.current_page * res.per_page, res.total);
+
+            let html = `
+                <div class="pagination-info">
+                    Showing <strong>${from}</strong> to <strong>${to}</strong> of <strong>${res.total}</strong> entries
+                </div>
+                <div class="pagination-buttons">
+            `;
+
+            // Previous button
+            if (res.current_page > 1) {
+                html += `<button class="page-link" onclick="fetchLogs(${res.current_page - 1})">Previous</button>`;
+            } else {
+                html += `<button class="page-link disabled">Previous</button>`;
+            }
+
+            // Page numbers range
+            const startPage = Math.max(1, res.current_page - 2);
+            const endPage = Math.min(res.last_page, res.current_page + 2);
+
+            if (startPage > 1) {
+                html += `<button class="page-link" onclick="fetchLogs(1)">1</button>`;
+                if (startPage > 2) {
+                    html += `<span style="color: var(--text-muted); padding: 0 0.25rem;">...</span>`;
+                }
+            }
+
+            for (let i = startPage; i <= endPage; i++) {
+                const activeClass = i === res.current_page ? 'active' : '';
+                html += `<button class="page-link ${activeClass}" onclick="fetchLogs(${i})">${i}</button>`;
+            }
+
+            if (endPage < res.last_page) {
+                if (endPage < res.last_page - 1) {
+                    html += `<span style="color: var(--text-muted); padding: 0 0.25rem;">...</span>`;
+                }
+                html += `<button class="page-link" onclick="fetchLogs(${res.last_page})">${res.last_page}</button>`;
+            }
+
+            // Next button
+            if (res.current_page < res.last_page) {
+                html += `<button class="page-link" onclick="fetchLogs(${res.current_page + 1})">Next</button>`;
+            } else {
+                html += `<button class="page-link disabled">Next</button>`;
+            }
+
+            html += `
+                </div>
+            `;
+
+            paginationContainer.innerHTML = html;
         }
 
-        // Run on load
-        fetchInitialLogs();
+        // Periodically refresh the data table via AJAX
+        function refreshLogsTable() {
+            fetchLogs(currentPage);
+        }
 
-        // Refresh log traces every 3 seconds dynamically without reloading the page
+        // Run on initial load
+        fetchLogs(1);
+
+        // Periodically refresh traces (every 30000 seconds as configured)
         setInterval(refreshLogsTable, 30000000);
 
         // Modal triggers

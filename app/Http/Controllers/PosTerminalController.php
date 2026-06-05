@@ -14,8 +14,8 @@ class PosTerminalController extends Controller
      */
     public function index()
     {
-        $logs = PosTerminalLog::latest()->get();
-        return view('pos_logs', compact('logs'));
+        // logs are loaded asynchronously via AJAX to handle large datasets (e.g. 20,000+ records)
+        return view('pos_logs');
     }
 
     /**
@@ -78,9 +78,36 @@ class PosTerminalController extends Controller
     /**
      * GET: Fetch all logs formatted for AJAX UI data table.
      */
-    public function getLogsData()
+    public function getLogsData(Request $request)
     {
-        $logs = PosTerminalLog::latest()->get()->map(function($log) {
+        $query = PosTerminalLog::query();
+
+        // 1. Date Filter (Default to today's date)
+        $date = $request->query('date', Carbon::today()->toDateString());
+        if (!empty($date)) {
+            $query->whereDate('client_timestamp', $date);
+        }
+
+        // 2. Level Filter
+        $level = $request->query('level', 'ALL');
+        if (!empty($level) && $level !== 'ALL') {
+            $query->where('level', $level);
+        }
+
+        // 3. Search Filter
+        $search = $request->query('search');
+        if (!empty($search)) {
+            $query->where(function($q) use ($search) {
+                $q->where('message', 'like', "%{$search}%")
+                  ->orWhere('agent_name', 'like', "%{$search}%");
+            });
+        }
+
+        // 4. Paginate (50 logs per page)
+        $paginated = $query->latest('client_timestamp')->paginate(50);
+
+        // Map items to match formatting
+        $formattedData = collect($paginated->items())->map(function($log) {
             return [
                 'id' => $log->id,
                 'created_at_formatted' => $log->created_at->format('Y-m-d H:i:s'),
@@ -91,7 +118,13 @@ class PosTerminalController extends Controller
             ];
         });
 
-        return response()->json($logs);
+        return response()->json([
+            'data' => $formattedData,
+            'current_page' => $paginated->currentPage(),
+            'last_page' => $paginated->lastPage(),
+            'per_page' => $paginated->perPage(),
+            'total' => $paginated->total(),
+        ]);
     }
 
     /**
