@@ -693,7 +693,7 @@
                                     ${sale.invoice_number}
                                 </td>
                                 <td class="mobile-cell">
-                                    ${sale.customer_mobile}
+                                    ${sale.customer_mobile || ''}
                                 </td>
                                 <td class="amount-cell">
                                     ${sale.amount_formatted}

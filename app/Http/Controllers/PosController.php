@@ -51,7 +51,7 @@ class PosController extends Controller
     {
         $request->validate([
             'amount' => 'required|numeric|min:0.01',
-            'customer_mobile' => 'required|string|min:9|max:15',
+            'customer_mobile' => 'nullable|string|min:9|max:15',
         ]);
 
         // Generate a clean, unique invoice number
