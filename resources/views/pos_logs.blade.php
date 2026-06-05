@@ -642,7 +642,7 @@
         fetchInitialLogs();
 
         // Refresh log traces every 3 seconds dynamically without reloading the page
-        setInterval(refreshLogsTable, 3000);
+        setInterval(refreshLogsTable, 30000000);
     </script>
 </body>
 </html>
