@@ -741,7 +741,7 @@
         }
 
         // Fetch sales log updates every 3 seconds dynamically without reloading the page
-        setInterval(refreshSalesTable, 3000);
+        // setInterval(refreshSalesTable, 3000);
     </script>
 </body>
 </html>

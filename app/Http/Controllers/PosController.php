@@ -103,42 +103,51 @@ class PosController extends Controller
     {
         Log::info("POS_RESPONSE_RECEIVED: ", $request->all());
 
-        // C# එකෙන් එන snake_case (invoice_number), camelCase (invoiceNumber), හෝ PascalCase (InvoiceNumber) කියවනවා.
+        // 1. C# එකෙන් එන විවිධ Casing වලට Fallbacks දීම
         $invoiceNumber = $request->input('invoice_number') ?? 
                          $request->input('invoiceNumber') ?? 
                          $request->input('InvoiceNumber');
 
-        if ($invoiceNumber) {
-            $sale = Sale::where('invoice_number', $invoiceNumber)->first();
-
-            if ($sale) {
-                // Payment status එක කියවීම (payment_status, paymentStatus, PaymentStatus, status, හෝ Status)
-                $statusVal = $request->input('payment_status') ?? 
-                             $request->input('paymentStatus') ?? 
-                             $request->input('PaymentStatus') ?? 
-                             $request->input('status') ?? 
-                             $request->input('Status') ?? 
-                             'SUCCESS';
-                $statusValUpper = strtoupper($statusVal);
-                
-                if (in_array($statusValUpper, ['SUCCESS', 'PAID', 'APPROVED', 'TRUE'])) {
-                    $sale->status = 'PAID';
-                } elseif (in_array($statusValUpper, ['FAILED', 'DECLINED', 'CANCELLED', 'ERROR', 'FALSE'])) {
-                    $sale->status = 'FAILED';
-                } else {
-                    $sale->status = 'PAID'; // fallback
-                }
-
-                // Debug කරගන්න මුළු response එකම සේව් කරනවා
-                $sale->pos_response = json_encode($request->all());
-                $sale->save();
-
-                // C# එකට සාර්ථකයි (200 OK) කියලා response එකක් දෙනවා
-                return response()->json(['status' => 'success'], 200);
-            }
+        // 🚨 [ලොකුම විසඳුම]: වැරදිලාවත් Invoice Number එක හිස්ව (Null/Empty) ආවොත්, 
+        // කිසිම Sale එකක් FAILED කරන්නේ නැහැ. මෙතනින්ම Request එක නවත්වනවා!
+        if (empty($invoiceNumber) || $invoiceNumber === null) {
+            Log::warning("POS_UPDATE_IGNORED: Received update request with an empty or null invoice number. No sales were modified.");
+            return response()->json([
+                'status' => 'ignored', 
+                'message' => 'Invoice number is required. Order status preserved.'
+            ], 200); // C# එකට 200 දෙනවා ලූප් එක නතර වෙන්න.
         }
 
-        Log::error("POS_UPDATE_FAILED: Invoice not found. Checked for: " . $invoiceNumber);
+        // 2. Invoice Number එකක් තිබුනොත් පමණක් ඩේටාබේස් එකේ සොයයි
+        $sale = Sale::where('invoice_number', $invoiceNumber)->first();
+
+        if ($sale) {
+            // Payment status එක කියවීම
+            $statusVal = $request->input('payment_status') ?? 
+                         $request->input('paymentStatus') ?? 
+                         $request->input('PaymentStatus') ?? 
+                         $request->input('status') ?? 
+                         $request->input('Status') ?? 
+                         'SUCCESS';
+                         
+            $statusValUpper = strtoupper($statusVal);
+            
+            if (in_array($statusValUpper, ['SUCCESS', 'PAID', 'APPROVED', 'TRUE'])) {
+                $sale->status = 'PAID';
+            } elseif (in_array($statusValUpper, ['FAILED', 'DECLINED', 'CANCELLED', 'ERROR', 'FALSE'])) {
+                $sale->status = 'FAILED';
+            } else {
+                $sale->status = 'PAID'; // fallback
+            }
+
+            // Debug කරගන්න මුළු response එකම සේව් කරනවා
+            $sale->pos_response = json_encode($request->all());
+            $sale->save();
+
+            return response()->json(['status' => 'success'], 200);
+        }
+
+        Log::error("POS_UPDATE_FAILED: Invoice not found in database. Checked for: " . $invoiceNumber);
         return response()->json(['status' => 'error', 'message' => 'Invoice not found'], 442);
     }
 
