@@ -96,12 +96,23 @@ class PosController extends Controller
         return response()->json(null);
     }
 
-   
     public function update(Request $request)
     {
         Log::info("POS_RESPONSE_RECEIVED: ", $request->all());
+
+        $invoiceNumber = $request->input('invoice_number');
+        $approvalCode = $request->input('approval_code');
+
+        if ($invoiceNumber && !is_null($approvalCode)) {
+            $sale = Sale::where('invoice_number', $invoiceNumber)->first();
+            if ($sale) {
+                $sale->status = 'PAID';
+                $sale->pos_response = json_encode($request->all());
+                $sale->save();
+            }
+        }
+
         return response()->json(['status' => 'success'], 200);
-        
     }
 
     /**
