@@ -23,7 +23,7 @@ class PosTerminalController extends Controller
      */
     public function storeLog(Request $request)
     {
-        // 1. C# එකෙන් එන දේවල් නිවැරදිද බලනවා (camelCase, snake_case, සහ PascalCase fallbacks සහිතව)
+        
         $timestamp = $request->input('timestamp') ?? $request->input('Timestamp');
         $level = $request->input('level') ?? $request->input('Level');
         $message = $request->input('message') ?? $request->input('Message');
@@ -52,7 +52,7 @@ class PosTerminalController extends Controller
         $validated = $validator->validated();
 
         try {
-            // 2. Database එකේ සේව් කිරීම
+        
             PosTerminalLog::create([
                 'agent_name'       => $validated['agent_name'] ?? 'Unknown-Agent',
                 'level'            => strtoupper($validated['level']),
@@ -60,7 +60,7 @@ class PosTerminalController extends Controller
                 'client_timestamp' => Carbon::parse($validated['timestamp']),
             ]);
 
-            // 3. (Optional) Laravel වල default laravel.log ෆයිල් එකටත් ලියාගන්න ඕනේ නම්:
+            
             $systemLogLine = "[{$validated['level']}] [C# AGENT: {$validated['agent_name']}] {$validated['message']}";
             if (in_array(strtoupper($validated['level']), ['ERROR', 'CRITICAL'])) {
                 Log::error($systemLogLine);
@@ -69,7 +69,7 @@ class PosTerminalController extends Controller
             return response()->json(['status' => 'success'], 200);
 
         } catch (\Exception $e) {
-            // මොකක් හරි හේතුවකින් DB සේව් වුනේ නැත්නම් Laravel log එකේ ලියනවා
+          
             Log::critical("Failed to save C# Agent Log to Database: " . $e->getMessage());
             return response()->json(['status' => 'error', 'message' => 'Internal Server Error'], 500);
         }
