@@ -487,7 +487,7 @@
 
                     <div class="form-group">
                         <label for="customer_mobile">Customer Mobile Number</label>
-                        <input type="text" name="customer_mobile" id="customer_mobile" class="form-control" placeholder="e.g. 94771234567" value="{{ old('customer_mobile') }}" required>
+                        <input type="text" name="customer_mobile" id="customer_mobile" class="form-control" placeholder="e.g. 94771234567" value="{{ old('customer_mobile') }}">
                         @error('customer_mobile')
                             <small style="color: var(--danger); margin-top: 0.25rem; display: block;">{{ $message }}</small>
                         @enderror
