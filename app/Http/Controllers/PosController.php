@@ -84,11 +84,11 @@ class PosController extends Controller
             ]);
 
             return response()->json([
-                'InvoiceNumber'  => $sale->invoice_number,
-                'Amount'         => (float) $sale->amount,
-                'CustomerMobile' => $sale->customer_mobile,
-                'MachineIP'      => $terminal->machine_ip,
-                'MachinePort'    => (int) $terminal->machine_port,
+                'invoice_number'  => $sale->invoice_number,
+                'amount'         => (float) $sale->amount,
+                'customer_mobile' => $sale->customer_mobile,
+                'machine_ip'      => $terminal->machine_ip,
+                'machine_port'    => (int) $terminal->machine_port,
             ]);
         }
 
@@ -103,16 +103,22 @@ class PosController extends Controller
     {
         Log::info("POS_RESPONSE_RECEIVED: ", $request->all());
 
-        // C# එකෙන් එන snake_case (invoice_number) එක කියවනවා. 
-        // වැරදිලාවත් CamelCase ආවොත් ඒකත් අහුවෙන්න fallback එකක් දාලා තියෙන්නේ.
-        $invoiceNumber = $request->input('invoice_number') ?? $request->input('InvoiceNumber');
+        // C# එකෙන් එන snake_case (invoice_number), camelCase (invoiceNumber), හෝ PascalCase (InvoiceNumber) කියවනවා.
+        $invoiceNumber = $request->input('invoice_number') ?? 
+                         $request->input('invoiceNumber') ?? 
+                         $request->input('InvoiceNumber');
 
         if ($invoiceNumber) {
             $sale = Sale::where('invoice_number', $invoiceNumber)->first();
 
             if ($sale) {
-                // Payment status එක කියවීම
-                $statusVal = $request->input('payment_status') ?? $request->input('status') ?? 'SUCCESS';
+                // Payment status එක කියවීම (payment_status, paymentStatus, PaymentStatus, status, හෝ Status)
+                $statusVal = $request->input('payment_status') ?? 
+                             $request->input('paymentStatus') ?? 
+                             $request->input('PaymentStatus') ?? 
+                             $request->input('status') ?? 
+                             $request->input('Status') ?? 
+                             'SUCCESS';
                 $statusValUpper = strtoupper($statusVal);
                 
                 if (in_array($statusValUpper, ['SUCCESS', 'PAID', 'APPROVED', 'TRUE'])) {

@@ -23,13 +23,33 @@ class PosTerminalController extends Controller
      */
     public function storeLog(Request $request)
     {
-        // 1. Validation (C# එකෙන් එන දේවල් නිවැරදිද බලනවා)
-        $validated = $request->validate([
+        // 1. C# එකෙන් එන දේවල් නිවැරදිද බලනවා (camelCase, snake_case, සහ PascalCase fallbacks සහිතව)
+        $timestamp = $request->input('timestamp') ?? $request->input('Timestamp');
+        $level = $request->input('level') ?? $request->input('Level');
+        $message = $request->input('message') ?? $request->input('Message');
+        $agentName = $request->input('agent_name') ?? $request->input('agentName') ?? $request->input('AgentName');
+
+        $validator = \Illuminate\Support\Facades\Validator::make([
+            'timestamp'  => $timestamp,
+            'level'      => $level,
+            'message'    => $message,
+            'agent_name' => $agentName,
+        ], [
             'timestamp'  => 'required|string',
             'level'      => 'required|string',
             'message'    => 'required|string',
             'agent_name' => 'nullable|string'
         ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Validation failed',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        $validated = $validator->validated();
 
         try {
             // 2. Database එකේ සේව් කිරීම
