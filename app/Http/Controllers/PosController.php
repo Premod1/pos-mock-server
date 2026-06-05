@@ -103,13 +103,15 @@ class PosController extends Controller
     {
         Log::info("POS_RESPONSE_RECEIVED: ", $request->all());
 
-        $invoiceNumber = $request->input('InvoiceNumber');
+        // C# එකෙන් එන snake_case (invoice_number) එක කියවනවා. 
+        // වැරදිලාවත් CamelCase ආවොත් ඒකත් අහුවෙන්න fallback එකක් දාලා තියෙන්නේ.
+        $invoiceNumber = $request->input('invoice_number') ?? $request->input('InvoiceNumber');
 
         if ($invoiceNumber) {
             $sale = Sale::where('invoice_number', $invoiceNumber)->first();
 
             if ($sale) {
-                // Read payment status from C# app (support both 'payment_status' and 'status')
+                // Payment status එක කියවීම
                 $statusVal = $request->input('payment_status') ?? $request->input('status') ?? 'SUCCESS';
                 $statusValUpper = strtoupper($statusVal);
                 
@@ -118,17 +120,19 @@ class PosController extends Controller
                 } elseif (in_array($statusValUpper, ['FAILED', 'DECLINED', 'CANCELLED', 'ERROR', 'FALSE'])) {
                     $sale->status = 'FAILED';
                 } else {
-                    $sale->status = 'PAID'; // fallback to success
+                    $sale->status = 'PAID'; // fallback
                 }
 
-                // Save full response for debug/logging visibility
+                // Debug කරගන්න මුළු response එකම සේව් කරනවා
                 $sale->pos_response = json_encode($request->all());
                 $sale->save();
 
-                return response()->json(['status' => 'success']);
+                // C# එකට සාර්ථකයි (200 OK) කියලා response එකක් දෙනවා
+                return response()->json(['status' => 'success'], 200);
             }
         }
 
+        Log::error("POS_UPDATE_FAILED: Invoice not found. Checked for: " . $invoiceNumber);
         return response()->json(['status' => 'error', 'message' => 'Invoice not found'], 442);
     }
 

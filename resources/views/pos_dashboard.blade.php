@@ -408,9 +408,17 @@
                 <h1>POS Terminal Mock Server</h1>
                 <p>Simulate Sales & Wi-Fi Terminal Polling</p>
             </div>
-            <div class="server-status">
-                <span class="status-dot"></span>
-                <span>Gateway Server Active</span>
+            <div style="display: flex; gap: 1rem; align-items: center;">
+                <a href="{{ route('terminal-logs.index') }}" style="display: inline-flex; align-items: center; gap: 0.5rem; background-color: rgba(244, 63, 94, 0.1); border: 1px solid rgba(244, 63, 94, 0.2); padding: 0.5rem 1.2rem; border-radius: 9999px; font-size: 0.85rem; font-weight: 500; color: #fb7185; text-decoration: none; transition: all 0.2s ease;" onmouseover="this.style.backgroundColor='rgba(244,63,94,0.18)'" onmouseout="this.style.backgroundColor='rgba(244,63,94,0.1)'">
+                    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                    </svg>
+                    <span>View Terminal Logs</span>
+                </a>
+                <div class="server-status">
+                    <span class="status-dot"></span>
+                    <span>Gateway Server Active</span>
+                </div>
             </div>
         </header>
 
