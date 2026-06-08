@@ -4,12 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>POS Terminal Logs</title>
-    
+
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
-    
+
     <!-- Premium Vanilla CSS Styling -->
     <style>
         :root {
@@ -587,7 +587,7 @@
 <body>
 
     <div class="container">
-        
+
         <!-- Header -->
         <header>
             <div class="logo-area">
@@ -601,7 +601,7 @@
                     </svg>
                     <span>Back to Dashboard</span>
                 </a>
-                
+
                 <form action="{{ route('terminal-logs.clear') }}" method="POST" onsubmit="return confirm('Are you sure you want to clear all logs? This action cannot be undone.');">
                     @csrf
                     <button type="submit" class="btn-danger-outline">
@@ -713,13 +713,13 @@
         function fetchLogs(page = 1) {
             currentPage = page;
             const container = document.getElementById('table-container');
-            
+
             // Show updating status
             const refreshInfo = document.querySelector('.refresh-info');
             if (refreshInfo) refreshInfo.style.opacity = '1';
 
             const url = `{{ route('terminal-logs.data') }}?page=${page}&date=${selectedDate}&level=${selectedLevel}&search=${encodeURIComponent(searchQuery)}`;
-            
+
             fetch(url)
                 .then(response => response.json())
                 .then(res => {
@@ -730,7 +730,7 @@
                     if (refreshInfo) {
                         setTimeout(() => {
                             refreshInfo.style.opacity = '0.5';
-                        }, 500);
+                        }, 100000);
                     }
                 })
                 .catch(err => {
@@ -752,7 +752,7 @@
         // Set log level filter
         function setLevelFilter(level) {
             selectedLevel = level;
-            
+
             // Toggle active state on buttons
             document.querySelectorAll('.filter-btn').forEach(btn => {
                 if (btn.getAttribute('data-level') === level) {
@@ -778,7 +778,7 @@
         // Function to build table rows dynamically
         function renderLogsTable(logs) {
             const container = document.getElementById('table-container');
-            
+
             if (!logs || logs.length === 0) {
                 container.innerHTML = `
                     <div class="empty-state">
@@ -918,11 +918,11 @@
             document.getElementById('modal-agent').innerText = agent;
             document.getElementById('modal-time').innerText = time;
             document.getElementById('modal-message').innerText = message;
-            
+
             const levelSpan = document.getElementById('modal-level');
             levelSpan.innerText = level;
             levelSpan.className = 'badge'; // reset
-            
+
             const lvl = level.toUpperCase();
             if (lvl === 'INFO') levelSpan.classList.add('badge-info');
             else if (lvl === 'DEBUG') levelSpan.classList.add('badge-debug');
