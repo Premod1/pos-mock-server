@@ -52,15 +52,18 @@ class PosTerminalController extends Controller
         $validated = $validator->validated();
 
         try {
-        
-            PosTerminalLog::create([
-                'agent_name'       => $validated['agent_name'] ?? 'Unknown-Agent',
-                'level'            => strtoupper($validated['level']),
-                'message'          => $validated['message'],
-                'client_timestamp' => Carbon::parse($validated['timestamp']),
-            ]);
+            $terminal = \App\Models\Terminal::first();
+            $dontSaveData = $terminal ? (bool)$terminal->dont_save_data : false;
 
-            
+            if (!$dontSaveData) {
+                PosTerminalLog::create([
+                    'agent_name'       => $validated['agent_name'] ?? 'Unknown-Agent',
+                    'level'            => strtoupper($validated['level']),
+                    'message'          => $validated['message'],
+                    'client_timestamp' => Carbon::parse($validated['timestamp']),
+                ]);
+            }
+
             $systemLogLine = "[{$validated['level']}] [C# AGENT: {$validated['agent_name']}] {$validated['message']}";
             if (in_array(strtoupper($validated['level']), ['ERROR', 'CRITICAL'])) {
                 Log::error($systemLogLine);
@@ -70,7 +73,7 @@ class PosTerminalController extends Controller
 
         } catch (\Exception $e) {
           
-            Log::critical("Failed to save C# Agent Log to Database: " . $e->getMessage());
+            Log::critical("Failed to handle C# Agent Log: " . $e->getMessage());
             return response()->json(['status' => 'error', 'message' => 'Internal Server Error'], 500);
         }
     }

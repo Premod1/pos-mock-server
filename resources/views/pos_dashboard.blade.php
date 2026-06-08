@@ -459,6 +459,16 @@
                             <small style="color: var(--danger); margin-top: 0.25rem; display: block;">{{ $message }}</small>
                         @enderror
                     </div>
+
+                    <div class="form-group" style="margin-top: 1.5rem; margin-bottom: 1.5rem;">
+                        <label style="display: flex; align-items: center; gap: 0.75rem; cursor: pointer; user-select: none;">
+                            <input type="checkbox" name="dont_save_data" id="dont_save_data" value="1" {{ old('dont_save_data', $terminal->dont_save_data) ? 'checked' : '' }} style="width: 1.2rem; height: 1.2rem; accent-color: var(--accent-color); cursor: pointer; border-radius: 0.25rem; border: 1px solid var(--border-color); background-color: var(--bg-secondary);">
+                            <span style="font-size: 0.9rem; color: var(--text-primary); font-weight: 500;">Don't save C# agent logs to database</span>
+                        </label>
+                        <small style="color: var(--text-secondary); display: block; margin-top: 0.25rem; margin-left: 1.95rem; font-size: 0.8rem;">
+                            If enabled, incoming logs from the C# agent will not be stored in the database.
+                        </small>
+                    </div>
                     
                     <button type="submit" class="btn">
                         Save Configuration

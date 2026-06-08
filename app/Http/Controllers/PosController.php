@@ -18,6 +18,7 @@ class PosController extends Controller
         $terminal = Terminal::first() ?? new Terminal([
             'machine_ip' => '192.168.1.150',
             'machine_port' => 8888,
+            'dont_save_data' => false,
         ]);
 
         // Get all sales, sorted by newest first
@@ -34,11 +35,13 @@ class PosController extends Controller
         $request->validate([
             'machine_ip' => 'required|ip',
             'machine_port' => 'required|integer|min:1|max:65535',
+            'dont_save_data' => 'sometimes|boolean',
         ]);
 
         $terminal = Terminal::first() ?? new Terminal();
         $terminal->machine_ip = $request->input('machine_ip');
         $terminal->machine_port = $request->input('machine_port');
+        $terminal->dont_save_data = $request->has('dont_save_data');
         $terminal->save();
 
         return redirect()->back()->with('success', 'Terminal configuration updated successfully!');
