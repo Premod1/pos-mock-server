@@ -158,34 +158,20 @@
             
             const res = await PrintBridge.getPrinters({ 
                 deviceId: deviceId,
-                timeout: 10000 
+                timeout: 5 
             });
 
-            writeLog('SDK-ACK', 'Received initial acknowledgement:', res);
+            writeLog('SDK-ACK', 'Received response from PrintBridge API:', res);
 
             let printers = [];
 
-            // Case 1: Direct sync array
-            if (Array.isArray(res)) {
-                printers = res;
-            } else if (res && Array.isArray(res.printers)) {
+            if (res && Array.isArray(res.printers)) {
                 printers = res.printers;
-            } 
-            // Case 2: Asynchronous MQTT dispatch
-            else if (res && res.requestId) {
-                writeLog('MQTT-WAIT', `Hardware notified. Request ID: ${res.requestId}`);
-                
-                // Event listener check (SDK built-in hook)
-                if (typeof PrintBridge.on === 'function') {
-                    writeLog('LISTENER', 'Attaching PrintBridge.on() event subscriber...');
-                    PrintBridge.on('printers', (data) => {
-                        writeLog('MQTT-DATA', 'Printers received via event listener:', data);
-                        renderPrinterOptions(data.printers || data);
-                    });
-                    return;
-                }
-
-                // Fallback polling strategy
+                writeLog('SYNC-SUCCESS', `Retrieved ${printers.length} printer(s) synchronously.`);
+            } else if (Array.isArray(res)) {
+                printers = res;
+            } else if (res && res.requestId) {
+                // Polling fallback if async response topic is used
                 printers = await pollPrinterResponse(deviceId, res.requestId);
             }
 
