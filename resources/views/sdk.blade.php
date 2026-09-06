@@ -223,7 +223,16 @@
         if (Array.isArray(printers) && printers.length > 0) {
             writeLog('SUCCESS', `Loaded ${printers.length} printer(s) to dropdown.`);
             printers.forEach((p, idx) => {
-                const name = typeof p === 'object' ? (p.name || p.printerName || p.id || JSON.stringify(p)) : p;
+                let name = p;
+                if (typeof p === 'object' && p !== null) {
+                    name = p.Name || p.name || p.printerName || p.id || JSON.stringify(p);
+                }
+                if (typeof name === 'string' && name.trim().startsWith('{')) {
+                    try {
+                        const parsed = JSON.parse(name);
+                        name = parsed.Name || parsed.name || parsed.printerName || name;
+                    } catch (e) {}
+                }
                 const opt = document.createElement('option');
                 opt.value = name;
                 opt.textContent = name;
