@@ -14,3 +14,7 @@ Route::post('/sale', [PosController::class, 'storeSale'])->name('sale.store');
 
 // AJAX: Get Sales Log JSON
 Route::get('/sales-data', [PosController::class, 'getSalesData'])->name('sales.data');
+
+
+// AJAX: Test SDK for printer service
+Route::get('/test-sdk', [PosController::class, 'testSdk'])->name('test.sdk');

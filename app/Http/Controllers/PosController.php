@@ -151,4 +151,14 @@ class PosController extends Controller
 
         return response()->json($sales);
     }
+
+    public function testSdk()
+{
+    $data = [
+        'title' => 'SDK Test Page',
+        'status' => 'Active',
+    ];
+
+    return view('sdk', $data);
+}
 }
