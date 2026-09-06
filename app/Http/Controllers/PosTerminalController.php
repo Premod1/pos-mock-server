@@ -1,0 +1,141 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\PosTerminalLog;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
+use Carbon\Carbon;
+
+class PosTerminalController extends Controller
+{
+    /**
+     * Display the terminal logs dashboard.
+     */
+    public function index()
+    {
+        // logs are loaded asynchronously via AJAX to handle large datasets (e.g. 20,000+ records)
+        return view('pos_logs');
+    }
+
+    /**
+     * API: POST endpoint to receive logs from C# agent and store in DB.
+     */
+    public function storeLog(Request $request)
+    {
+        
+        $timestamp = $request->input('timestamp') ?? $request->input('Timestamp');
+        $level = $request->input('level') ?? $request->input('Level');
+        $message = $request->input('message') ?? $request->input('Message');
+        $agentName = $request->input('agent_name') ?? $request->input('agentName') ?? $request->input('AgentName');
+
+        $validator = \Illuminate\Support\Facades\Validator::make([
+            'timestamp'  => $timestamp,
+            'level'      => $level,
+            'message'    => $message,
+            'agent_name' => $agentName,
+        ], [
+            'timestamp'  => 'required|string',
+            'level'      => 'required|string',
+            'message'    => 'required|string',
+            'agent_name' => 'nullable|string'
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Validation failed',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        $validated = $validator->validated();
+
+        try {
+            $terminal = \App\Models\Terminal::first();
+            $dontSaveData = $terminal ? (bool)$terminal->dont_save_data : false;
+
+            if (!$dontSaveData) {
+                PosTerminalLog::create([
+                    'agent_name'       => $validated['agent_name'] ?? 'Unknown-Agent',
+                    'level'            => strtoupper($validated['level']),
+                    'message'          => $validated['message'],
+                    'client_timestamp' => Carbon::parse($validated['timestamp']),
+                ]);
+            }
+
+            $systemLogLine = "[{$validated['level']}] [C# AGENT: {$validated['agent_name']}] {$validated['message']}";
+            if (in_array(strtoupper($validated['level']), ['ERROR', 'CRITICAL'])) {
+                Log::error($systemLogLine);
+            }
+
+            return response()->json(['status' => 'success'], 200);
+
+        } catch (\Exception $e) {
+          
+            Log::critical("Failed to handle C# Agent Log: " . $e->getMessage());
+            return response()->json(['status' => 'error', 'message' => 'Internal Server Error'], 500);
+        }
+    }
+
+    /**
+     * GET: Fetch all logs formatted for AJAX UI data table.
+     */
+    public function getLogsData(Request $request)
+    {
+        $query = PosTerminalLog::query();
+
+        // 1. Date Filter (Default to today's date)
+        $date = $request->query('date', Carbon::today()->toDateString());
+        if (!empty($date)) {
+            $query->whereDate('client_timestamp', $date);
+        }
+
+        // 2. Level Filter
+        $level = $request->query('level', 'ALL');
+        if (!empty($level) && $level !== 'ALL') {
+            $query->where('level', $level);
+        }
+
+        // 3. Search Filter
+        $search = $request->query('search');
+        if (!empty($search)) {
+            $query->where(function($q) use ($search) {
+                $q->where('message', 'like', "%{$search}%")
+                  ->orWhere('agent_name', 'like', "%{$search}%");
+            });
+        }
+
+        // 4. Paginate (50 logs per page)
+        $paginated = $query->latest('client_timestamp')->paginate(50);
+
+        // Map items to match formatting
+        $formattedData = collect($paginated->items())->map(function($log) {
+            return [
+                'id' => $log->id,
+                'created_at_formatted' => $log->created_at->format('Y-m-d H:i:s'),
+                'client_timestamp_formatted' => Carbon::parse($log->client_timestamp)->format('Y-m-d H:i:s'),
+                'agent_name' => $log->agent_name ?? 'Unknown-Agent',
+                'level' => strtoupper($log->level),
+                'message' => $log->message,
+            ];
+        });
+
+        return response()->json([
+            'data' => $formattedData,
+            'current_page' => $paginated->currentPage(),
+            'last_page' => $paginated->lastPage(),
+            'per_page' => $paginated->perPage(),
+            'total' => $paginated->total(),
+        ]);
+    }
+
+    /**
+     * POST: Clear all terminal logs from the database.
+     */
+    public function clearLogs()
+    {
+        PosTerminalLog::truncate();
+        return redirect()->back()->with('success', 'Terminal logs cleared successfully!');
+    }
+}

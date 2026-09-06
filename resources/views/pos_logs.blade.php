@@ -1,0 +1,957 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>POS Terminal Logs</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+
+    <!-- Premium Vanilla CSS Styling -->
+    <style>
+        :root {
+            --bg-primary: #0a0f1d;
+            --bg-secondary: #131a30;
+            --bg-card: #1c2541;
+            --accent-color: #4f46e5;
+            --accent-hover: #4338ca;
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --success: #10b981;
+            --success-glow: rgba(16, 185, 129, 0.15);
+            --warning: #f59e0b;
+            --warning-glow: rgba(245, 158, 11, 0.15);
+            --danger: #ef4444;
+            --danger-glow: rgba(239, 68, 68, 0.15);
+            --border-color: #2e3a5f;
+            --font-main: 'Outfit', sans-serif;
+            --font-mono: 'Space Mono', monospace;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            font-family: var(--font-main);
+            line-height: 1.5;
+            min-height: 100vh;
+            padding: 2rem 1.5rem;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        /* Header design */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2.5rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .logo-area h1 {
+            font-size: 1.85rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #fb7185 0%, #e11d48 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -0.02em;
+        }
+
+        .logo-area p {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-top: 0.25rem;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .btn-outline {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background-color: transparent;
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 0.5rem;
+            padding: 0.6rem 1.2rem;
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            gap: 0.5rem;
+        }
+
+        .btn-outline:hover {
+            border-color: var(--text-primary);
+            background-color: rgba(255, 255, 255, 0.05);
+            transform: translateY(-1px);
+        }
+
+        .btn-danger-outline {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background-color: transparent;
+            color: #f87171;
+            border: 1px solid rgba(239, 68, 68, 0.4);
+            border-radius: 0.5rem;
+            padding: 0.6rem 1.2rem;
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            gap: 0.5rem;
+        }
+
+        .btn-danger-outline:hover {
+            border-color: var(--danger);
+            background-color: var(--danger-glow);
+            transform: translateY(-1px);
+        }
+
+        /* Toast notifications */
+        .alert {
+            padding: 1rem 1.25rem;
+            border-radius: 0.75rem;
+            margin-bottom: 2rem;
+            font-size: 0.95rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        .alert-success {
+            background-color: var(--success-glow);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            color: #34d399;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateY(-10px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        /* Filter Controls Card */
+        .controls-card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
+        }
+
+        @media (min-width: 768px) {
+            .controls-card {
+                flex-direction: row;
+                align-items: center;
+                justify-content: space-between;
+            }
+        }
+
+        .search-wrapper {
+            position: relative;
+            flex-grow: 1;
+            max-width: 450px;
+        }
+
+        .search-input {
+            width: 100%;
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 0.5rem;
+            padding: 0.65rem 1rem 0.65rem 2.5rem;
+            color: var(--text-primary);
+            font-family: var(--font-main);
+            font-size: 0.9rem;
+            transition: all 0.2s ease;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.25);
+            background-color: var(--bg-primary);
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 0.85rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+            pointer-events: none;
+        }
+
+        .filter-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .filter-btn {
+            background-color: var(--bg-secondary);
+            color: var(--text-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 0.375rem;
+            padding: 0.45rem 0.85rem;
+            font-size: 0.85rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .filter-btn:hover {
+            color: var(--text-primary);
+            border-color: var(--text-secondary);
+        }
+
+        .filter-btn.active {
+            background-color: var(--accent-color);
+            color: white;
+            border-color: var(--accent-color);
+            box-shadow: 0 0 8px rgba(79, 70, 229, 0.3);
+        }
+
+        /* Logs Table Card styling */
+        .table-card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 1rem;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+            width: 100%;
+            overflow: hidden;
+        }
+
+        .table-header-wrapper {
+            padding: 1.5rem 1.75rem;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .table-responsive {
+            width: 100%;
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }
+
+        th {
+            background-color: rgba(19, 26, 48, 0.5);
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            padding: 1rem 1.75rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        td {
+            padding: 1.15rem 1.75rem;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 0.95rem;
+            color: var(--text-primary);
+            vertical-align: middle;
+        }
+
+        tr:hover td {
+            background-color: rgba(255, 255, 255, 0.02);
+        }
+
+        .mono-cell {
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            white-space: nowrap;
+        }
+
+        .message-cell {
+            font-size: 0.9rem;
+            color: var(--text-primary);
+            max-width: 450px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            cursor: pointer;
+            transition: color 0.2s ease;
+        }
+
+        .message-cell:hover {
+            color: #fb7185;
+            text-decoration: underline;
+        }
+
+        /* Premium Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(10, 15, 29, 0.85);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .modal-card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 1.25rem;
+            width: 90%;
+            max-width: 650px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            transform: scale(0.9);
+            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            overflow: hidden;
+        }
+
+        .modal-overlay.active .modal-card {
+            transform: scale(1);
+        }
+
+        .modal-header {
+            padding: 1.25rem 1.75rem;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h3 {
+            font-size: 1.15rem;
+            font-weight: 600;
+            background: linear-gradient(135deg, #fb7185 0%, #e11d48 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin: 0;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 1.75rem;
+            cursor: pointer;
+            transition: color 0.2s ease;
+            line-height: 1;
+        }
+
+        .modal-close:hover {
+            color: var(--danger);
+        }
+
+        .modal-body {
+            padding: 1.75rem;
+        }
+
+        .modal-meta {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 0.75rem;
+            margin-bottom: 1.5rem;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            border-bottom: 1px solid rgba(46, 58, 95, 0.5);
+            padding-bottom: 1.25rem;
+        }
+
+        @media (min-width: 576px) {
+            .modal-meta {
+                grid-template-columns: 1.2fr 0.8fr 1.5fr;
+            }
+        }
+
+        .modal-text-wrapper {
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 0.75rem;
+            padding: 1.25rem;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .modal-text-wrapper pre {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            font-family: var(--font-mono);
+            font-size: 0.9rem;
+            color: var(--text-primary);
+            line-height: 1.6;
+            margin: 0;
+        }
+
+        /* Badges */
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.25rem 0.65rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .badge-info {
+            background-color: var(--success-glow);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            color: #34d399;
+        }
+
+        .badge-debug {
+            background-color: rgba(148, 163, 184, 0.15);
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            color: #cbd5e1;
+        }
+
+        .badge-warning {
+            background-color: var(--warning-glow);
+            border: 1px solid rgba(245, 158, 11, 0.2);
+            color: #fbbf24;
+        }
+
+        .badge-error, .badge-critical {
+            background-color: var(--danger-glow);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            color: #f87171;
+        }
+
+        .empty-state {
+            padding: 4rem 1.75rem;
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 0.95rem;
+        }
+
+        .empty-state svg {
+            width: 48px;
+            height: 48px;
+            stroke: var(--text-muted);
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        /* Refresh Indicator info */
+        .refresh-info {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .spinner {
+            width: 12px;
+            height: 12px;
+            border: 2px solid var(--border-color);
+            border-top-color: #fb7185;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Date Picker CSS */
+        .date-wrapper {
+            position: relative;
+            min-width: 160px;
+        }
+
+        .date-input {
+            width: 100%;
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            border-radius: 0.5rem;
+            padding: 0.55rem 1rem;
+            font-size: 0.9rem;
+            outline: none;
+            transition: all 0.2s ease;
+            font-family: var(--font-sans);
+            cursor: pointer;
+        }
+
+        .date-input:focus {
+            border-color: #fb7185;
+            box-shadow: 0 0 0 2px rgba(244, 63, 94, 0.15);
+        }
+
+        /* Premium Pagination Styles */
+        .pagination-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1.25rem 1.75rem;
+            border-top: 1px solid var(--border-color);
+            gap: 1rem;
+        }
+
+        @media (min-width: 576px) {
+            .pagination-container {
+                flex-direction: row;
+            }
+        }
+
+        .pagination-info {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .pagination-buttons {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .page-link {
+            background-color: var(--bg-secondary);
+            color: var(--text-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 0.5rem;
+            padding: 0.5rem 0.85rem;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            user-select: none;
+        }
+
+        .page-link:hover:not(.disabled) {
+            background-color: rgba(255, 255, 255, 0.05);
+            color: var(--text-primary);
+            border-color: var(--text-muted);
+        }
+
+        .page-link.active {
+            background-color: rgba(244, 63, 94, 0.15);
+            color: #fb7185;
+            border-color: rgba(244, 63, 94, 0.3);
+            font-weight: 600;
+        }
+
+        .page-link.disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+
+        <!-- Header -->
+        <header>
+            <div class="logo-area">
+                <h1>POS Terminal Logs</h1>
+                <p>Monitor C# application log traces and execution stream</p>
+            </div>
+            <div class="header-actions">
+                <a href="{{ route('dashboard') }}" class="btn-outline">
+                    <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                    </svg>
+                    <span>Back to Dashboard</span>
+                </a>
+
+                <form action="{{ route('terminal-logs.clear') }}" method="POST" onsubmit="return confirm('Are you sure you want to clear all logs? This action cannot be undone.');">
+                    @csrf
+                    <button type="submit" class="btn-danger-outline">
+                        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                        <span>Clear All</span>
+                    </button>
+                </form>
+            </div>
+        </header>
+
+        <!-- Flash Message -->
+        @if(session('success'))
+            <div class="alert alert-success" id="success-alert">
+                <span>{{ session('success') }}</span>
+                <span style="cursor: pointer;" onclick="document.getElementById('success-alert').style.display='none'">&times;</span>
+            </div>
+        @endif
+
+        <!-- Controls (Filters and Search) -->
+        <div class="controls-card">
+            <!-- Search Bar -->
+            <div class="search-wrapper">
+                <svg class="search-icon" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+                <input type="text" id="search-input" class="search-input" placeholder="Search by message or agent name..." oninput="handleSearchFilter()">
+            </div>
+
+            <!-- Date Filter Picker -->
+            <div class="date-wrapper">
+                <input type="date" id="date-input" class="date-input" onchange="handleDateFilterChange()">
+            </div>
+
+            <!-- Filter Buttons -->
+            <div class="filter-buttons">
+                <button class="filter-btn active" data-level="ALL" onclick="setLevelFilter('ALL')">ALL</button>
+                <button class="filter-btn" data-level="INFO" onclick="setLevelFilter('INFO')">INFO</button>
+                <button class="filter-btn" data-level="DEBUG" onclick="setLevelFilter('DEBUG')">DEBUG</button>
+                <button class="filter-btn" data-level="WARNING" onclick="setLevelFilter('WARNING')">WARNING</button>
+                <button class="filter-btn" data-level="ERROR" onclick="setLevelFilter('ERROR')">ERROR</button>
+                <button class="filter-btn" data-level="CRITICAL" onclick="setLevelFilter('CRITICAL')">CRITICAL</button>
+            </div>
+        </div>
+
+        <!-- Logs Table Card -->
+        <div class="table-card">
+            <div class="table-header-wrapper">
+                <div style="display: flex; flex-direction: column; gap: 0.2rem;">
+                    <h2 style="font-size: 1.15rem; font-weight: 600;">System Event Stream</h2>
+                    <p style="font-size: 0.8rem; color: var(--text-secondary);">Latest client-side logs captured from terminal agent</p>
+                </div>
+                <div class="refresh-info">
+                    <span class="spinner"></span>
+                    <span>Live updating...</span>
+                </div>
+            </div>
+
+            <div class="table-responsive" id="table-container">
+                <div class="empty-state">
+                    <svg class="spinner" width="24" height="24" fill="none" viewBox="0 0 24 24" style="margin: 0 auto 1rem; animation: spin 1s linear infinite;">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" style="opacity: 0.25;"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" style="opacity: 0.75;"></path>
+                    </svg>
+                    <p>Fetching latest terminal logs...</p>
+                </div>
+            </div>
+            <div id="pagination-container"></div>
+        </div>
+
+    </div>
+
+    <!-- Premium Modal Popup for Full Log Messages -->
+    <div id="log-modal" class="modal-overlay">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3>Full Log Message Details</h3>
+                <button class="modal-close" onclick="closeLogModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="modal-meta">
+                    <div><strong>Agent Name:</strong> <br><span id="modal-agent" style="color: #a5b4fc; font-weight: 500;"></span></div>
+                    <div><strong>Log Level:</strong> <br><span id="modal-level" class="badge"></span></div>
+                    <div><strong>Timestamp (Client):</strong> <br><span id="modal-time" class="mono-cell"></span></div>
+                </div>
+                <div class="modal-text-wrapper">
+                    <pre><code id="modal-message"></code></pre>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Live AJAX Refresh, Search & Filter Script -->
+    <script>
+        let selectedLevel = 'ALL';
+        let searchQuery = '';
+        let currentPage = 1;
+        let selectedDate = '';
+        let totalPages = 1;
+        let totalRecords = 0;
+
+        // Set default date input to today
+        const todayStr = new Date().toISOString().split('T')[0];
+        document.getElementById('date-input').value = todayStr;
+        selectedDate = todayStr;
+
+        // Fetch logs data from paginated API endpoint
+        function fetchLogs(page = 1) {
+            currentPage = page;
+            const container = document.getElementById('table-container');
+
+            // Show updating status
+            const refreshInfo = document.querySelector('.refresh-info');
+            if (refreshInfo) refreshInfo.style.opacity = '1';
+
+            const url = `{{ route('terminal-logs.data') }}?page=${page}&date=${selectedDate}&level=${selectedLevel}&search=${encodeURIComponent(searchQuery)}`;
+
+            fetch(url)
+                .then(response => response.json())
+                .then(res => {
+                    totalPages = res.last_page;
+                    totalRecords = res.total;
+                    renderLogsTable(res.data);
+                    renderPagination(res);
+                    if (refreshInfo) {
+                        setTimeout(() => {
+                            refreshInfo.style.opacity = '0.5';
+                        }, 100000);
+                    }
+                })
+                .catch(err => {
+                    console.error('Error fetching logs:', err);
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <p style="color: var(--danger)">Error loading logs from server.</p>
+                        </div>
+                    `;
+                });
+        }
+
+        // Date filter change handler
+        function handleDateFilterChange() {
+            selectedDate = document.getElementById('date-input').value;
+            fetchLogs(1);
+        }
+
+        // Set log level filter
+        function setLevelFilter(level) {
+            selectedLevel = level;
+
+            // Toggle active state on buttons
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                if (btn.getAttribute('data-level') === level) {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
+            });
+
+            fetchLogs(1);
+        }
+
+        // Search text filter with 300ms debounce to prevent high server load
+        let searchTimeout;
+        function handleSearchFilter() {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                searchQuery = document.getElementById('search-input').value.trim();
+                fetchLogs(1);
+            }, 300);
+        }
+
+        // Function to build table rows dynamically
+        function renderLogsTable(logs) {
+            const container = document.getElementById('table-container');
+
+            if (!logs || logs.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 48px; height: 48px; stroke: var(--text-muted); margin-bottom: 1rem; opacity: 0.5;">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                        </svg>
+                        <p>No terminal logs captured for this date or matching filters.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            let html = `
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Client Timestamp</th>
+                            <th>Logged to Server</th>
+                            <th>Agent</th>
+                            <th>Level</th>
+                            <th>Log Message</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            logs.forEach(log => {
+                let badgeClass = 'badge-info';
+                if (log.level === 'INFO') badgeClass = 'badge-info';
+                else if (log.level === 'DEBUG') badgeClass = 'badge-debug';
+                else if (log.level === 'WARNING') badgeClass = 'badge-warning';
+                else if (log.level === 'ERROR') badgeClass = 'badge-error';
+                else if (log.level === 'CRITICAL') badgeClass = 'badge-critical';
+
+                // Safely stringify variables to prevent HTML/Quotes escaping issues in JS parameters
+                const escMsg = JSON.stringify(log.message);
+                const escAgent = JSON.stringify(log.agent_name || 'Unknown-Agent');
+                const escLvl = JSON.stringify(log.level);
+                const escTime = JSON.stringify(log.client_timestamp_formatted);
+
+                html += `
+                    <tr>
+                        <td class="mono-cell">${log.client_timestamp_formatted}</td>
+                        <td class="mono-cell" style="color: var(--text-muted)">${log.created_at_formatted}</td>
+                        <td style="font-weight: 500; color: #a5b4fc">${log.agent_name || 'Unknown-Agent'}</td>
+                        <td>
+                            <span class="badge ${badgeClass}">${log.level}</span>
+                        </td>
+                        <td class="message-cell" onclick='showLogDetails(${escAgent}, ${escLvl}, ${escTime}, ${escMsg})'>${log.message}</td>
+                    </tr>
+                `;
+            });
+
+            html += `
+                    </tbody>
+                </table>
+            `;
+
+            container.innerHTML = html;
+        }
+
+        // Render Pagination buttons and stats
+        function renderPagination(res) {
+            const paginationContainer = document.getElementById('pagination-container');
+            if (!res || res.total === 0) {
+                paginationContainer.innerHTML = '';
+                return;
+            }
+
+            const from = (res.current_page - 1) * res.per_page + 1;
+            const to = Math.min(res.current_page * res.per_page, res.total);
+
+            let html = `
+                <div class="pagination-info">
+                    Showing <strong>${from}</strong> to <strong>${to}</strong> of <strong>${res.total}</strong> entries
+                </div>
+                <div class="pagination-buttons">
+            `;
+
+            // Previous button
+            if (res.current_page > 1) {
+                html += `<button class="page-link" onclick="fetchLogs(${res.current_page - 1})">Previous</button>`;
+            } else {
+                html += `<button class="page-link disabled">Previous</button>`;
+            }
+
+            // Page numbers range
+            const startPage = Math.max(1, res.current_page - 2);
+            const endPage = Math.min(res.last_page, res.current_page + 2);
+
+            if (startPage > 1) {
+                html += `<button class="page-link" onclick="fetchLogs(1)">1</button>`;
+                if (startPage > 2) {
+                    html += `<span style="color: var(--text-muted); padding: 0 0.25rem;">...</span>`;
+                }
+            }
+
+            for (let i = startPage; i <= endPage; i++) {
+                const activeClass = i === res.current_page ? 'active' : '';
+                html += `<button class="page-link ${activeClass}" onclick="fetchLogs(${i})">${i}</button>`;
+            }
+
+            if (endPage < res.last_page) {
+                if (endPage < res.last_page - 1) {
+                    html += `<span style="color: var(--text-muted); padding: 0 0.25rem;">...</span>`;
+                }
+                html += `<button class="page-link" onclick="fetchLogs(${res.last_page})">${res.last_page}</button>`;
+            }
+
+            // Next button
+            if (res.current_page < res.last_page) {
+                html += `<button class="page-link" onclick="fetchLogs(${res.current_page + 1})">Next</button>`;
+            } else {
+                html += `<button class="page-link disabled">Next</button>`;
+            }
+
+            html += `
+                </div>
+            `;
+
+            paginationContainer.innerHTML = html;
+        }
+
+        // Periodically refresh the data table via AJAX
+        function refreshLogsTable() {
+            fetchLogs(currentPage);
+        }
+
+        // Run on initial load
+        fetchLogs(1);
+
+        // Periodically refresh traces (every 30000 seconds as configured)
+        setInterval(refreshLogsTable, 30000000);
+
+        // Modal triggers
+        function showLogDetails(agent, level, time, message) {
+            document.getElementById('modal-agent').innerText = agent;
+            document.getElementById('modal-time').innerText = time;
+            document.getElementById('modal-message').innerText = message;
+
+            const levelSpan = document.getElementById('modal-level');
+            levelSpan.innerText = level;
+            levelSpan.className = 'badge'; // reset
+
+            const lvl = level.toUpperCase();
+            if (lvl === 'INFO') levelSpan.classList.add('badge-info');
+            else if (lvl === 'DEBUG') levelSpan.classList.add('badge-debug');
+            else if (lvl === 'WARNING') levelSpan.classList.add('badge-warning');
+            else if (lvl === 'ERROR') levelSpan.classList.add('badge-error');
+            else if (lvl === 'CRITICAL') levelSpan.classList.add('badge-critical');
+
+            const modal = document.getElementById('log-modal');
+            modal.style.display = 'flex';
+            setTimeout(() => {
+                modal.classList.add('active');
+            }, 10);
+        }
+
+        function closeLogModal() {
+            const modal = document.getElementById('log-modal');
+            modal.classList.remove('active');
+            setTimeout(() => {
+                modal.style.display = 'none';
+            }, 300);
+        }
+
+        // Close on clicking overlay background
+        window.addEventListener('click', function(e) {
+            const modal = document.getElementById('log-modal');
+            if (e.target === modal) {
+                closeLogModal();
+            }
+        });
+    </script>
+</body>
+</html>

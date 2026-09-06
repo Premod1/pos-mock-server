@@ -18,6 +18,7 @@ class PosController extends Controller
         $terminal = Terminal::first() ?? new Terminal([
             'machine_ip' => '192.168.1.150',
             'machine_port' => 8888,
+            'dont_save_data' => false,
         ]);
 
         // Get all sales, sorted by newest first
@@ -34,11 +35,13 @@ class PosController extends Controller
         $request->validate([
             'machine_ip' => 'required|ip',
             'machine_port' => 'required|integer|min:1|max:65535',
+            'dont_save_data' => 'sometimes|boolean',
         ]);
 
         $terminal = Terminal::first() ?? new Terminal();
         $terminal->machine_ip = $request->input('machine_ip');
         $terminal->machine_port = $request->input('machine_port');
+        $terminal->dont_save_data = $request->has('dont_save_data');
         $terminal->save();
 
         return redirect()->back()->with('success', 'Terminal configuration updated successfully!');
@@ -51,7 +54,7 @@ class PosController extends Controller
     {
         $request->validate([
             'amount' => 'required|numeric|min:0.01',
-            'customer_mobile' => 'required|string|min:9|max:15',
+            'customer_mobile' => 'nullable|string|min:9|max:15',
         ]);
 
         // Generate a clean, unique invoice number
@@ -84,11 +87,11 @@ class PosController extends Controller
             ]);
 
             return response()->json([
-                'InvoiceNumber'  => $sale->invoice_number,
-                'Amount'         => (float) $sale->amount,
-                'CustomerMobile' => $sale->customer_mobile,
-                'MachineIP'      => $terminal->machine_ip,
-                'MachinePort'    => (int) $terminal->machine_port,
+                'invoice_number'  => $sale->invoice_number,
+                'amount'         => (float) $sale->amount,
+                'customer_mobile' => $sale->customer_mobile,
+                'machine_ip'      => $terminal->machine_ip,
+                'machine_port'    => (int) $terminal->machine_port,
             ]);
         }
 
@@ -96,40 +99,23 @@ class PosController extends Controller
         return response()->json(null);
     }
 
-    /**
-     * API: POST Update endpoint from C# application after payment completion.
-     */
     public function update(Request $request)
     {
         Log::info("POS_RESPONSE_RECEIVED: ", $request->all());
 
-        $invoiceNumber = $request->input('InvoiceNumber');
+        $invoiceNumber = $request->input('invoice_number');
+        $approvalCode = $request->input('approval_code');
 
-        if ($invoiceNumber) {
+        if ($invoiceNumber && !is_null($approvalCode)) {
             $sale = Sale::where('invoice_number', $invoiceNumber)->first();
-
             if ($sale) {
-                // Read payment status from C# app (support both 'payment_status' and 'status')
-                $statusVal = $request->input('payment_status') ?? $request->input('status') ?? 'SUCCESS';
-                $statusValUpper = strtoupper($statusVal);
-                
-                if (in_array($statusValUpper, ['SUCCESS', 'PAID', 'APPROVED', 'TRUE'])) {
-                    $sale->status = 'PAID';
-                } elseif (in_array($statusValUpper, ['FAILED', 'DECLINED', 'CANCELLED', 'ERROR', 'FALSE'])) {
-                    $sale->status = 'FAILED';
-                } else {
-                    $sale->status = 'PAID'; // fallback to success
-                }
-
-                // Save full response for debug/logging visibility
+                $sale->status = 'PAID';
                 $sale->pos_response = json_encode($request->all());
                 $sale->save();
-
-                return response()->json(['status' => 'success']);
             }
         }
 
-        return response()->json(['status' => 'error', 'message' => 'Invoice not found'], 442);
+        return response()->json(['status' => 'success'], 200);
     }
 
     /**

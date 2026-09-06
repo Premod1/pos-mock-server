@@ -15,6 +15,17 @@ Route::post('/sale', [PosController::class, 'storeSale'])->name('sale.store');
 // AJAX: Get Sales Log JSON
 Route::get('/sales-data', [PosController::class, 'getSalesData'])->name('sales.data');
 
+<<<<<<< HEAD
 
 // AJAX: Test SDK for printer service
 Route::get('/test-sdk', [PosController::class, 'testSdk'])->name('test.sdk');
+=======
+// Dashboard Logs UI
+Route::get('/terminal-logs', [\App\Http\Controllers\PosTerminalController::class, 'index'])->name('terminal-logs.index');
+
+// AJAX: Get Terminal Logs JSON
+Route::get('/terminal-logs-data', [\App\Http\Controllers\PosTerminalController::class, 'getLogsData'])->name('terminal-logs.data');
+
+// Clear Terminal Logs
+Route::post('/terminal-logs/clear', [\App\Http\Controllers\PosTerminalController::class, 'clearLogs'])->name('terminal-logs.clear');
+>>>>>>> 4b04a87ad41cb4689ed355c224b9eede0814d09a
