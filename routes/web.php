@@ -2,12 +2,15 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\PosController;
+use App\Http\Controllers\PosTerminalController;
 
 // Dashboard UI
 Route::get('/', [PosController::class, 'index'])->name('dashboard');
 
 // Update Terminal Config
 Route::post('/terminal', [PosController::class, 'updateTerminal'])->name('terminal.update');
+
+Route::get('/terminal-logs', [PosTerminalController::class, 'getTerminalLogs'])->name('terminal-logs.index');
 
 // Create New Sale
 Route::post('/sale', [PosController::class, 'storeSale'])->name('sale.store');
